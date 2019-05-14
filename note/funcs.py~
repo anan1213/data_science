@@ -1,0 +1,175 @@
+#! /usr/env/bin python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import os
+import re
+
+
+def kesson_table(df):
+    """this function make kesson_table.
+       This can return neccesarry value.
+       Returns: kesson_table
+    """
+    total = df.isnull().sum()
+    percent = total / len(df) * 100
+    kesson_table = pd.concat([total, percent], keys=['Total', 'Percent'], axis=1)
+    kesson_table = kesson_table.drop(kesson_table[kesson_table['Total'] == 0].index)
+    return kesson_table
+
+def display_graph(history):
+    """this function display two figure.
+       two figure are learned figure of deep learning using keras.
+       Returns: two figures
+    """
+    plt.figure(figsize=(12, 5))
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('model accuracy', fontsize=20)
+    plt.xlabel('epochs', fontsize=15)
+    plt.ylabel('accuracy', fontsize=15)
+    plt.show()
+
+    plt.figure(figsize=(12, 5))
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss', fontsize=20)
+    plt.xlabel('epochs', fontsize=15)
+    plt.ylabel('loss', fontsize=15)
+    plt.show()
+
+def diff_col(df_train, df_test):
+    """this function display different columns.
+       using end of feature engineerning.
+       Returns: diff columns.
+    """
+    diff_train = list(set(df_train.columns) - set(df_test.columns))
+    diff_test = list(set(df_train.columns) - set(df_test.columns))
+    diff_all = set(diff_train + diff_test)
+    return diff_all
+
+
+def list_from_json(x, name):
+    """this function make column named xx_list.
+       (xx_list make by yourself. this func make value.)
+       this can' processe in tha case of including NaN.
+       before use this function, you must do fillna('none').
+       Returns: list 
+    """
+    if x == 'none':
+        return 'none'
+    else:
+        return_list = []
+        jsons = eval(x)
+        for json in jsons:
+            return_list.append(json[name])
+        return return_list
+
+
+def make_unique_list(df, col_of_list):
+    """this function make unique list of having list of column.
+       if column of df is not list type, this function don't use.
+       and if the col have Nan, you must change 'none'.
+       Returns unique_list.
+    """
+    cols = df[col_of_list]
+    unique_list = []
+    for col in cols:
+        for word in col:
+            if word in unique_list:
+                unique_list.append(word)
+    del_list = 'none'
+    for del_word in del_list:
+        try:
+            unique_list.remove(del_word)
+        except:
+            pass
+    unique_list.append('none')
+    return unique_list
+
+
+def return_one(x, word):
+    """this function returns one-hot list.
+       if word exist in x, return 1. else 0.
+       Return one-hot.
+    """
+    if word in x:
+        return 1
+    else:
+        return 0
+    
+
+def return_one_list(x, word_list):
+    """this function return one-hot list.
+       x must be list.
+       this func judge existing word_list in x_list. 
+       Return one-hot.
+    """
+    for x_one in x:
+        if x_one in word_list:
+            return 1
+        else:
+            return 0
+        
+
+def create_getdummies(df, col_name, col_list):
+    """this  function make get_dummies. don't use drop_first.
+       to use this function, you must make col_list of col_name.
+       if column including list don't exist, you can't use this.
+       this function use make_unique_list and return_one
+       Returns: get_dummies.(original columns)
+    """
+    unique_list = make_unique_list(df, col_list)
+    for unique in unique_list:
+        df[col_name + '_' + unique] = pd.Series(np.zeros(df.shape[0]))
+        df[col_name + '_' + unique] = df[col_list].apply(lambda x: return_one(x, unique))
+        
+    
+def drop_all(Drop_list):
+    """this function drop train test columns.
+       this can drop together.
+       but you must name df_train and df_test and Drop_list must be list. 
+       Return none.
+    """
+    df_train.drop(Drop_list, axis=1, inplace=True)
+    df_test.drop(Drop_list, axis=1, inplace=True)
+    
+
+def fillna_all(col_name, var='none'):
+    """this function fillna together df_train ,df_test.
+       if arg's str is int, fillna(digits), else fillna('none')
+       default is 'none'.
+       and your dataframe are must be df_tain, df_test
+       Returns: none.
+    """
+    if str.isdigit():
+        df_train[col_name] = df_train[col_name].fillna(var)
+        df_test[col_name] = df_test[col_name].fillna(var)
+    else:
+        df_train[col_name] = df_train[col_name].fillna('none')
+        df_test[col_name] = df_test[col_name].fillna('none')
+
+
+def dict_count(df, col_list, unique_list):
+    """this function make dictionry that key is unique-word , value is count.
+       col_list must be list.
+       if value of one_col exist in unique_list +1.
+       for example ['a', 'b', 'c'] all data count.
+       And sort value.
+       Returns: dictionary 
+    """
+    dictionary = {}
+    for cols in df[col_list]:
+        for col in cols:
+            if col in dictionary:
+                dictionary[col] = 0
+            else:
+                pass
+            if col in unique_list:
+                dictionary[col] += 1
+    sort = sorted(dictionary.item(), keys=lambda x: x[1], reverse=True)
+    return sort
+
+
+
+    
